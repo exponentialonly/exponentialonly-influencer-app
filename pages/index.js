@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Instagram, Youtube, Twitter, TrendingUp, Calendar, Download, Bookmark, ExternalLink, Users, MapPin, Tag, Image } from 'lucide-react';
+import { Search, Filter, Instagram, Youtube, Twitter, TrendingUp, Calendar, Download, Bookmark, ExternalLink, Users, MapPin, Tag, Image, RefreshCw, Database } from 'lucide-react';
 
 export default function InfluencerDiscoveryApp() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -13,8 +13,10 @@ export default function InfluencerDiscoveryApp() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showApiInfo, setShowApiInfo] = useState(false);
+  const [dataSource, setDataSource] = useState('demo'); // 'demo' or 'sheets'
+  const [allInfluencers, setAllInfluencers] = useState([]);
 
-  // Mock data for influencers
+  // Mock data for demo mode
   const mockInfluencers = [
     {
       id: 1,
@@ -146,6 +148,12 @@ export default function InfluencerDiscoveryApp() {
     }
   ];
 
+  // Initialize with mock data
+  useEffect(() => {
+    setAllInfluencers(mockInfluencers);
+    setFilteredInfluencers(mockInfluencers);
+  }, []);
+
   const categories = ["all", "fitness", "wellness", "lifestyle", "tech", "reviews", "food", "vegan", "sustainability", "travel", "photography", "beauty", "makeup", "fashion", "real estate", "finance", "investment", "home decor"];
 
   const searchSuggestions = [
@@ -179,67 +187,104 @@ export default function InfluencerDiscoveryApp() {
     return "Macro (500K+)";
   };
 
-  useEffect(() => {
-    setShowApiInfo(false);
-  }, [selectedPlatform, selectedFollowerRange, selectedLocation, selectedCategory, sortBy]);
+  // Fetch from Google Sheets
+  const fetchFromSheets = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/get-influencers');
+      const data = await response.json();
+      
+      if (data.influencers && data.influencers.length > 0) {
+        setAllInfluencers(data.influencers);
+        setDataSource('sheets');
+        // Re-apply current filters
+        filterInfluencers(data.influencers);
+      } else {
+        alert('No data found in Google Sheets. Make sure your sheet is set up correctly.');
+      }
+    } catch (error) {
+      console.error('Error loading sheet data:', error);
+      alert('Failed to load data from Google Sheets. Make sure you have set up the API route with your Sheet ID.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  useEffect(() => {
-    let filtered = mockInfluencers;
+  // Filter influencers based on all criteria
+  const filterInfluencers = (influencersToFilter) => {
+    let filtered = influencersToFilter || allInfluencers;
 
+    // Search filter
     if (searchTerm) {
       filtered = filtered.filter(influencer =>
         influencer.bio.toLowerCase().includes(searchTerm.toLowerCase()) ||
         influencer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        influencer.categories.some(cat => cat.toLowerCase().includes(searchTerm.toLowerCase()))
+        (influencer.categories && influencer.categories.some(cat => cat.toLowerCase().includes(searchTerm.toLowerCase())))
       );
     }
 
+    // Platform filter
     if (selectedPlatform !== "all") {
       filtered = filtered.filter(influencer =>
-        influencer.platforms.includes(selectedPlatform)
+        influencer.platforms && influencer.platforms.includes(selectedPlatform)
       );
     }
 
+    // Follower range filter
     if (selectedFollowerRange !== "all") {
       filtered = filtered.filter(influencer => {
-        if (selectedFollowerRange === "nano") return influencer.followers < 10000;
-        if (selectedFollowerRange === "micro") return influencer.followers >= 10000 && influencer.followers < 100000;
-        if (selectedFollowerRange === "mid") return influencer.followers >= 100000 && influencer.followers < 500000;
-        if (selectedFollowerRange === "macro") return influencer.followers >= 500000;
+        const followers = influencer.followers || 0;
+        if (selectedFollowerRange === "nano") return followers < 10000;
+        if (selectedFollowerRange === "micro") return followers >= 10000 && followers < 100000;
+        if (selectedFollowerRange === "mid") return followers >= 100000 && followers < 500000;
+        if (selectedFollowerRange === "macro") return followers >= 500000;
         return true;
       });
     }
 
+    // Location filter
     if (selectedLocation) {
       filtered = filtered.filter(influencer =>
-        influencer.location.toLowerCase().includes(selectedLocation.toLowerCase())
+        influencer.location && influencer.location.toLowerCase().includes(selectedLocation.toLowerCase())
       );
     }
 
+    // Category filter
     if (selectedCategory !== "all") {
       filtered = filtered.filter(influencer =>
-        influencer.categories.includes(selectedCategory)
+        influencer.categories && influencer.categories.includes(selectedCategory)
       );
     }
 
+    // Sorting
     if (sortBy === "followers") {
-      filtered.sort((a, b) => b.followers - a.followers);
+      filtered.sort((a, b) => (b.followers || 0) - (a.followers || 0));
     } else if (sortBy === "engagement") {
-      filtered.sort((a, b) => b.engagementRate - a.engagementRate);
+      filtered.sort((a, b) => (b.engagementRate || 0) - (a.engagementRate || 0));
     }
 
     setFilteredInfluencers(filtered);
-  }, [searchTerm, selectedPlatform, selectedFollowerRange, selectedLocation, selectedCategory, sortBy]);
+  };
+
+  // Apply filters whenever criteria change
+  useEffect(() => {
+    filterInfluencers();
+  }, [searchTerm, selectedPlatform, selectedFollowerRange, selectedLocation, selectedCategory, sortBy, allInfluencers]);
+
+  // Reset API info when filters change
+  useEffect(() => {
+    setShowApiInfo(false);
+  }, [selectedPlatform, selectedFollowerRange, selectedLocation, selectedCategory, sortBy]);
 
   const handleSearch = () => {
     if (!searchTerm) return;
     
     setIsLoading(true);
     
-    const hasResults = mockInfluencers.some(influencer =>
+    const hasResults = allInfluencers.some(influencer =>
       influencer.bio.toLowerCase().includes(searchTerm.toLowerCase()) ||
       influencer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      influencer.categories.some(cat => cat.toLowerCase().includes(searchTerm.toLowerCase()))
+      (influencer.categories && influencer.categories.some(cat => cat.toLowerCase().includes(searchTerm.toLowerCase())))
     );
     
     setTimeout(() => {
@@ -262,14 +307,14 @@ export default function InfluencerDiscoveryApp() {
     const dataToExport = filteredInfluencers;
     const headers = ["Name", "Handle", "Platforms", "Followers", "Engagement Rate", "Location", "Categories", "Website"];
     const rows = dataToExport.map(inf => [
-      inf.name,
-      inf.handle,
-      inf.platforms.join(", "),
-      inf.followers,
-      inf.engagementRate + "%",
-      inf.location,
-      inf.categories.join(", "),
-      inf.website
+      inf.name || '',
+      inf.handle || '',
+      inf.platforms ? inf.platforms.join(", ") : '',
+      inf.followers || 0,
+      (inf.engagementRate || 0) + "%",
+      inf.location || '',
+      inf.categories ? inf.categories.join(", ") : '',
+      inf.website || ''
     ]);
     
     const csvContent = [headers, ...rows].map(row => row.join(",")).join("\n");
@@ -277,7 +322,7 @@ export default function InfluencerDiscoveryApp() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "influencers-demo-export.csv";
+    a.download = "influencers-export.csv";
     a.click();
   };
 
@@ -310,6 +355,50 @@ export default function InfluencerDiscoveryApp() {
           font-size: 0.875rem;
           color: #888;
           margin-top: 0.25rem;
+        }
+        .data-source-toggle {
+          margin-bottom: 1.5rem;
+          padding: 1rem;
+          background: #f0f9ff;
+          border-radius: 0.5rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 1rem;
+        }
+        .data-source-info {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        .data-source-label {
+          font-weight: bold;
+        }
+        .data-source-status {
+          color: #666;
+        }
+        .data-source-button {
+          padding: 0.5rem 1rem;
+          background: #3b82f6;
+          color: white;
+          border: none;
+          border-radius: 0.375rem;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          transition: all 0.2s;
+        }
+        .data-source-button:hover:not(:disabled) {
+          background: #2563eb;
+        }
+        .data-source-button:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        .data-source-button-active {
+          background: #10b981;
         }
         .search-container {
           position: relative;
@@ -467,6 +556,8 @@ export default function InfluencerDiscoveryApp() {
           justify-content: space-between;
           align-items: center;
           margin-bottom: 1rem;
+          flex-wrap: wrap;
+          gap: 1rem;
         }
         .results-info {
           color: #666;
@@ -741,15 +832,61 @@ export default function InfluencerDiscoveryApp() {
           color: #999;
           font-size: 0.875rem;
         }
+        @media (max-width: 640px) {
+          .filters-grid {
+            grid-template-columns: 1fr;
+          }
+          .influencers-grid {
+            grid-template-columns: 1fr;
+          }
+        }
       `}</style>
 
       <div className="container">
         <div className="header">
           <h1 className="title">🔍 Influencer Discovery Tool</h1>
           <p className="subtitle">Find the perfect influencers for your brand</p>
-          <p className="demo-note">Demo version with 8 sample influencers - Try searching for "real estate" now!</p>
+          <p className="demo-note">
+            {dataSource === 'sheets' 
+              ? 'Using data from Google Sheets' 
+              : 'Demo version with 8 sample influencers - Connect Google Sheets for real data!'}
+          </p>
         </div>
 
+        {/* Data Source Toggle */}
+        <div className="data-source-toggle">
+          <div className="data-source-info">
+            <Database size={20} />
+            <span className="data-source-label">Data Source:</span>
+            <span className="data-source-status">
+              {dataSource === 'sheets' ? 'Google Sheets (Live Data)' : 'Demo Data'}
+            </span>
+          </div>
+          <button
+            onClick={fetchFromSheets}
+            disabled={isLoading}
+            className={`data-source-button ${dataSource === 'sheets' ? 'data-source-button-active' : ''}`}
+          >
+            {isLoading ? (
+              <>
+                <RefreshCw size={16} className="spinner" />
+                Loading...
+              </>
+            ) : dataSource === 'sheets' ? (
+              <>
+                <RefreshCw size={16} />
+                Refresh Data
+              </>
+            ) : (
+              <>
+                <Database size={16} />
+                Load from Google Sheets
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Search Bar */}
         <div className="search-container">
           <div className="search-wrapper">
             <div className="search-input-wrapper">
@@ -798,6 +935,7 @@ export default function InfluencerDiscoveryApp() {
           )}
         </div>
 
+        {/* Filters */}
         <div className="filters-container">
           <div className="filters-header">
             <Filter size={20} />
@@ -860,21 +998,17 @@ export default function InfluencerDiscoveryApp() {
           </div>
         </div>
 
+        {/* API Info */}
         {showApiInfo && searchTerm && filteredInfluencers.length === 0 && !isLoading && (
           <div className="api-info">
-            <h3>🔍 Real-Time Search Integration</h3>
+            <h3>🔍 No Results Found</h3>
             <p>
-              This is a demo version using sample data. In a production environment, searching for "{searchTerm}" would:
+              No influencers found for "{searchTerm}" in the current data source.
             </p>
-            <ul>
-              <li>Query Instagram's API for profiles matching your keywords</li>
-              <li>Search TikTok's Creator Marketplace API</li>
-              <li>Access YouTube's Data API for channel information</li>
-              <li>Pull data from Twitter/X's API</li>
-              <li>Aggregate results from influencer databases</li>
-            </ul>
             <p className="api-info-note">
-              To implement real search, you'll need API keys from each platform and/or access to influencer marketing platforms like AspireIQ, GRIN, or CreatorIQ.
+              {dataSource === 'sheets' 
+                ? 'Try adding more influencers to your Google Sheet or search for different keywords.'
+                : 'Connect your Google Sheets to add your own influencer data!'}
             </p>
             <button
               onClick={() => {
@@ -883,11 +1017,12 @@ export default function InfluencerDiscoveryApp() {
               }}
               className="clear-button"
             >
-              Clear search and view all demo influencers
+              Clear search and view all influencers
             </button>
           </div>
         )}
 
+        {/* Results Header */}
         <div className="results-header">
           <div>
             <p className="results-info">{filteredInfluencers.length} influencers found</p>
@@ -905,27 +1040,32 @@ export default function InfluencerDiscoveryApp() {
           </button>
         </div>
 
+        {/* Loading State */}
         {isLoading && (
           <div className="loading-container">
             <div className="loading-content">
               <div className="spinner"></div>
-              <p className="loading-text">Searching for influencers...</p>
+              <p className="loading-text">
+                {dataSource === 'sheets' ? 'Loading from Google Sheets...' : 'Searching for influencers...'}
+              </p>
             </div>
           </div>
         )}
 
+        {/* Influencer Grid */}
         {!isLoading && (
           <div className="influencers-grid">
             {filteredInfluencers.map((influencer) => (
               <div key={influencer.id} className="influencer-card">
+                {/* Card Header */}
                 <div className="card-header">
                   <div className="profile-section">
-                    <div className={`profile-image profile-gradient-${influencer.id % 4}`}>
-                      {influencer.name.split(' ').map(n => n[0]).join('')}
+                    <div className={`profile-image profile-gradient-${(influencer.id || Math.random() * 100) % 4}`}>
+                      {influencer.name ? influencer.name.split(' ').map(n => n[0]).join('') : '?'}
                     </div>
                     <div className="profile-info">
-                      <h3>{influencer.name}</h3>
-                      <p className="profile-handle">{influencer.handle}</p>
+                      <h3>{influencer.name || 'Unknown'}</h3>
+                      <p className="profile-handle">{influencer.handle || '@unknown'}</p>
                     </div>
                   </div>
                   <button
@@ -937,35 +1077,38 @@ export default function InfluencerDiscoveryApp() {
                   </button>
                 </div>
 
+                {/* Platforms */}
                 <div className="platforms">
-                  {influencer.platforms.map(platform => (
+                  {influencer.platforms && influencer.platforms.map(platform => (
                     <span key={platform}>
                       {platformIcons[platform]}
                     </span>
                   ))}
                 </div>
 
+                {/* Stats */}
                 <div className="stats-grid">
                   <div>
                     <div className="stat-item">
                       <Users size={16} />
                       <span>Followers</span>
                     </div>
-                    <p className="stat-value">{(influencer.followers / 1000).toFixed(0)}K</p>
-                    <p className="stat-label">{getFollowerRangeLabel(influencer.followers)}</p>
+                    <p className="stat-value">{((influencer.followers || 0) / 1000).toFixed(0)}K</p>
+                    <p className="stat-label">{getFollowerRangeLabel(influencer.followers || 0)}</p>
                   </div>
                   <div>
                     <div className="stat-item">
                       <TrendingUp size={16} />
                       <span>Engagement</span>
                     </div>
-                    <p className="stat-value">{influencer.engagementRate}%</p>
+                    <p className="stat-value">{influencer.engagementRate || 0}%</p>
                     <p className="stat-label">Avg rate</p>
                   </div>
                 </div>
 
+                {/* Bio */}
                 <p className="bio">
-                  {searchTerm ? (
+                  {searchTerm && influencer.bio ? (
                     influencer.bio.split(new RegExp(`(${searchTerm})`, 'gi')).map((part, index) =>
                       part.toLowerCase() === searchTerm.toLowerCase() ? (
                         <span key={index} style={{ backgroundColor: '#fef3c7' }}>{part}</span>
@@ -974,42 +1117,56 @@ export default function InfluencerDiscoveryApp() {
                       )
                     )
                   ) : (
-                    influencer.bio
+                    influencer.bio || 'No bio available'
                   )}
                 </p>
 
-                <div className="location">
-                  <MapPin size={16} />
-                  <span>{influencer.location}</span>
-                </div>
+                {/* Location */}
+                {influencer.location && (
+                  <div className="location">
+                    <MapPin size={16} />
+                    <span>{influencer.location}</span>
+                  </div>
+                )}
 
-                <div className="categories">
-                  {influencer.categories.map(cat => (
-                    <span key={cat} className="category-tag">
-                      <Tag size={12} />
-                      {cat}
-                    </span>
-                  ))}
-                </div>
+                {/* Categories */}
+                {influencer.categories && influencer.categories.length > 0 && (
+                  <div className="categories">
+                    {influencer.categories.map(cat => (
+                      <span key={cat} className="category-tag">
+                        <Tag size={12} />
+                        {cat}
+                      </span>
+                    ))}
+                  </div>
+                )}
 
-                <div className="analytics">
-                  <h4>Analytics</h4>
-                  <div className="analytics-grid">
-                    <div className="analytics-item">
-                      <TrendingUp size={12} />
-                      <span>Avg likes: {(influencer.avgLikesPerPost / 1000).toFixed(1)}K</span>
-                    </div>
-                    <div className="analytics-item">
-                      <Calendar size={12} />
-                      <span>{influencer.postsPerWeek} posts/week</span>
+                {/* Analytics */}
+                {(influencer.avgLikesPerPost || influencer.postsPerWeek) && (
+                  <div className="analytics">
+                    <h4>Analytics</h4>
+                    <div className="analytics-grid">
+                      {influencer.avgLikesPerPost && (
+                        <div className="analytics-item">
+                          <TrendingUp size={12} />
+                          <span>Avg likes: {(influencer.avgLikesPerPost / 1000).toFixed(1)}K</span>
+                        </div>
+                      )}
+                      {influencer.postsPerWeek && (
+                        <div className="analytics-item">
+                          <Calendar size={12} />
+                          <span>{influencer.postsPerWeek} posts/week</span>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
+                )}
 
+                {/* Recent Content */}
                 <div className="recent-content">
                   <h4>Recent Content</h4>
                   <div className="content-grid">
-                    {influencer.topContent.map((content, idx) => (
+                    {[1, 2, 3].map((idx) => (
                       <div key={idx} className="content-placeholder">
                         <Image size={24} />
                       </div>
@@ -1017,25 +1174,29 @@ export default function InfluencerDiscoveryApp() {
                   </div>
                 </div>
 
+                {/* Actions */}
                 <div className="actions">
                   <button className="view-button">
                     View Profile
                   </button>
-                  <a
-                    href={`https://${influencer.website}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="website-link"
-                  >
-                    <ExternalLink size={16} />
-                  </a>
+                  {influencer.website && (
+                    <a
+                      href={`https://${influencer.website.replace(/^https?:\/\//, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="website-link"
+                    >
+                      <ExternalLink size={16} />
+                    </a>
+                  )}
                 </div>
               </div>
             ))}
           </div>
         )}
 
-        {!isLoading && filteredInfluencers.length === 0 && (
+        {/* No Results */}
+        {!isLoading && filteredInfluencers.length === 0 && !showApiInfo && (
           <div className="no-results">
             <p>No influencers found matching your criteria.</p>
             {searchTerm && (
