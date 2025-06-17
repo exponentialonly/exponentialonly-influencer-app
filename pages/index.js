@@ -1004,7 +1004,7 @@ export default function InfluencerDiscoveryApp() {
           <p className="demo-note">
             {dataSource === 'sheets' 
               ? 'Using data from Google Sheets' 
-              : 'Demo version with 8 sample influencers - Connect Google Sheets for real data!'}
+              : 'Using Google Sheets for real data!'}
           </p>
         </div>
 
