@@ -200,20 +200,19 @@ export default function InfluencerDiscoveryApp() {
   const categories = ["all", "fitness", "wellness", "lifestyle", "tech", "reviews", "food", "vegan", "sustainability", "travel", "photography", "beauty", "makeup", "fashion", "real estate", "finance", "investment", "home decor"];
 
   const searchSuggestions = [
-    "fitness coach",
-    "vegan recipes", 
+    "real estate", 
     "tech reviewer",
     "travel photographer",
-    "makeup artist",
-    "sustainable fashion",
+    "Dubai",
+    "sustainablity",
     "yoga instructor",
     "food blogger",
-    "real estate",
+    "UAE",
     "property investment"
   ];
 
   const statusOptions = ["all", "Available", "Contacted", "Negotiating", "Confirmed", "Unavailable"];
-  const rateRangeOptions = ["all", "$", "$$", "$$$", "$$$$"];
+  const rateRangeOptions = ["all", "Free", "$", "$$", "$$$"];
 
   const platformIcons = {
     instagram: <Instagram className="icon-small" />,
@@ -1048,7 +1047,7 @@ export default function InfluencerDiscoveryApp() {
               <Search className="search-icon" />
               <input
                 type="text"
-                placeholder="Search by keywords (e.g., real estate, fitness coach, vegan recipes)"
+                placeholder="Search by keywords (real estate)"
                 className="search-input"
                 value={searchTerm}
                 onChange={(e) => {
