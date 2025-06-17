@@ -1095,12 +1095,12 @@ export default function InfluencerDiscoveryApp() {
 
       <div className="container">
         <div className="header">
-          <h1 className="title">🔍 Influencer Discovery Tool</h1>
-          <p className="subtitle">Find the perfect influencers for your brand</p>
+          <h1 className="title">🔍 DLD Influencers Tool</h1>
+          <p className="subtitle">Find the perfect influencers for any DLD Campaign</p>
           <p className="demo-note">
             {dataSource === 'sheets' 
               ? 'Using data from Google Sheets' 
-              : 'Demo version with 8 sample influencers - Connect Google Sheets for real data!'}
+              : 'Using Google Sheets for real data!'}
           </p>
         </div>
 
