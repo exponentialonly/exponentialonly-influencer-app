@@ -68,6 +68,14 @@ export default async function handler(req, res) {
             // Ensure status is capitalized properly
             influencer.status = value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : 'Available';
             break;
+          case 'approved':
+          case 'in_house':
+            // Normalize Yes/No values
+            influencer[cleanHeader] = value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : 'No';
+            break;
+          case 'nationality':
+            influencer.nationality = value.trim();
+            break;
           case 'notes':
             influencer.notes = value.trim();
             break;
@@ -89,6 +97,7 @@ export default async function handler(req, res) {
       influencer.engagementRate = influencer.engagementRate || 0;
       influencer.bio = influencer.bio || '';
       influencer.location = influencer.location || '';
+      influencer.nationality = influencer.nationality || '';
       influencer.categories = influencer.categories || [];
       influencer.avgLikesPerPost = influencer.avgLikesPerPost || 0;
       influencer.postsPerWeek = influencer.postsPerWeek || 0;
@@ -96,6 +105,8 @@ export default async function handler(req, res) {
       influencer.instagram_username = influencer.instagram_username || '';
       influencer.rate_range = influencer.rate_range || '';
       influencer.status = influencer.status || 'Available';
+      influencer.approved = influencer.approved || 'No';
+      influencer.in_house = influencer.in_house || 'No';
       influencer.rating = influencer.rating || 0;
       influencer.notes = influencer.notes || '';
       influencer.last_contact = influencer.last_contact || '';
