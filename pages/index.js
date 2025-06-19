@@ -10,6 +10,8 @@ export default function InfluencerDiscoveryApp() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedRateRange, setSelectedRateRange] = useState("all");
+  const [selectedNationality, setSelectedNationality] = useState("");
+  const [selectedApproved, setSelectedApproved] = useState("all");
   const [sortBy, setSortBy] = useState("relevance");
   const [savedInfluencers, setSavedInfluencers] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -34,6 +36,7 @@ export default function InfluencerDiscoveryApp() {
 
   const statusOptions = ["all", "Available", "Contacted", "Negotiating", "Confirmed", "Unavailable"];
   const rateRangeOptions = ["all", "$", "$$", "$$$", "$$$$"];
+  const approvedOptions = ["all", "Yes", "No"];
 
   const platformIcons = {
     instagram: <Instagram className="icon-small" />,
@@ -191,6 +194,20 @@ export default function InfluencerDiscoveryApp() {
       );
     }
 
+    // Nationality filter
+    if (selectedNationality) {
+      filtered = filtered.filter(influencer =>
+        influencer.nationality && influencer.nationality.toLowerCase().includes(selectedNationality.toLowerCase())
+      );
+    }
+
+    // Approved filter
+    if (selectedApproved !== "all") {
+      filtered = filtered.filter(influencer =>
+        influencer.approved && influencer.approved.toLowerCase() === selectedApproved.toLowerCase()
+      );
+    }
+
     // Sorting
     if (sortBy === "followers") {
       filtered.sort((a, b) => (b.followers || 0) - (a.followers || 0));
@@ -206,7 +223,7 @@ export default function InfluencerDiscoveryApp() {
   // Apply filters whenever criteria change
   useEffect(() => {
     filterInfluencers();
-  }, [searchTerm, selectedPlatform, selectedFollowerRange, selectedLocation, selectedCategory, selectedStatus, selectedRateRange, sortBy, allInfluencers]);
+  }, [searchTerm, selectedPlatform, selectedFollowerRange, selectedLocation, selectedCategory, selectedStatus, selectedRateRange, selectedNationality, selectedApproved, sortBy, allInfluencers]);
 
   const handleSearch = () => {
     if (!searchTerm) return;
@@ -223,7 +240,7 @@ export default function InfluencerDiscoveryApp() {
 
   const exportToCSV = () => {
     const dataToExport = filteredInfluencers;
-    const headers = ["Name", "Handle", "Email", "Platforms", "Followers", "Engagement Rate", "Location", "Categories", "Website", "Rate Range", "Status", "Rating", "Notes", "Last Contact"];
+    const headers = ["Name", "Handle", "Email", "Platforms", "Followers", "Engagement Rate", "Location", "Categories", "Website", "Rate Range", "Status", "Rating", "Notes", "Last Contact", "Nationality", "Approved"];
     const rows = dataToExport.map(inf => [
       inf.name || '',
       inf.handle || '',
@@ -238,7 +255,9 @@ export default function InfluencerDiscoveryApp() {
       inf.status || '',
       inf.rating || '',
       inf.notes || '',
-      inf.last_contact || ''
+      inf.last_contact || '',
+      inf.nationality || '',
+      inf.approved || ''
     ]);
     
     const csvContent = [headers, ...rows].map(row => row.join(",")).join("\n");
@@ -908,6 +927,26 @@ export default function InfluencerDiscoveryApp() {
               <option value="engagement">Sort by Engagement</option>
               <option value="rating">Sort by Rating</option>
             </select>
+
+            <input
+              type="text"
+              placeholder="Filter by nationality..."
+              className="filter-input"
+              value={selectedNationality}
+              onChange={(e) => setSelectedNationality(e.target.value)}
+            />
+
+            <select
+              className="filter-select"
+              value={selectedApproved}
+              onChange={(e) => setSelectedApproved(e.target.value)}
+            >
+              {approvedOptions.map(option => (
+                <option key={option} value={option}>
+                  {option === 'all' ? 'All Approved Status' : `Approved: ${option}`}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -1099,6 +1138,14 @@ export default function InfluencerDiscoveryApp() {
                   <div className="location">
                     <MapPin size={16} />
                     <span>{influencer.location}</span>
+                  </div>
+                )}
+
+                {/* Nationality - NEW */}
+                {influencer.nationality && (
+                  <div className="location">
+                    <Users size={16} />
+                    <span>Nationality: {influencer.nationality}</span>
                   </div>
                 )}
 
