@@ -1,7 +1,10 @@
 export default async function handler(req, res) {
   // Replace with your actual Sheet ID from the Google Sheets URL
-  const SHEET_ID = '1ebZswB2W8yT7VhfIhB5wyS2NvreKkC2lq5lmlX1Kp-E';
+  const SHEET_ID = 'YOUR_GOOGLE_SHEET_ID_HERE';
   const SHEET_NAME = 'Sheet1'; // Default sheet name
+  
+  // Valid categories
+  const validCategories = ['real estate', 'lifestyle', 'investment'];
   
   try {
     // Fetch data from Google Sheets (CSV format)
@@ -50,9 +53,18 @@ export default async function handler(req, res) {
             influencer[cleanHeader] = parseInt(value) || 0;
             break;
           case 'platforms':
-          case 'categories':
             // Handle comma-separated values
             influencer[cleanHeader] = value ? value.split(',').map(item => item.trim().toLowerCase()) : [];
+            break;
+          case 'categories':
+            // Handle categories and validate them
+            if (value) {
+              const cats = value.split(',').map(item => item.trim().toLowerCase());
+              // Filter to only valid categories
+              influencer[cleanHeader] = cats.filter(cat => validCategories.includes(cat));
+            } else {
+              influencer[cleanHeader] = [];
+            }
             break;
           case 'instagram_username':
             // Store Instagram username for profile picture
@@ -68,19 +80,14 @@ export default async function handler(req, res) {
             // Ensure status is capitalized properly
             influencer.status = value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : 'Available';
             break;
-          case 'approved':
-          case 'in_house':
-            // Normalize Yes/No values
-            influencer[cleanHeader] = value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : 'No';
-            break;
-          case 'nationality':
-            influencer.nationality = value.trim();
-            break;
           case 'notes':
             influencer.notes = value.trim();
             break;
           case 'last_contact':
             influencer.last_contact = value.trim();
+            break;
+          case 'profile_picture_url':
+            influencer.profile_picture_url = value.trim();
             break;
           default:
             influencer[cleanHeader] = value;
@@ -97,7 +104,6 @@ export default async function handler(req, res) {
       influencer.engagementRate = influencer.engagementRate || 0;
       influencer.bio = influencer.bio || '';
       influencer.location = influencer.location || '';
-      influencer.nationality = influencer.nationality || '';
       influencer.categories = influencer.categories || [];
       influencer.avgLikesPerPost = influencer.avgLikesPerPost || 0;
       influencer.postsPerWeek = influencer.postsPerWeek || 0;
@@ -105,15 +111,10 @@ export default async function handler(req, res) {
       influencer.instagram_username = influencer.instagram_username || '';
       influencer.rate_range = influencer.rate_range || '';
       influencer.status = influencer.status || 'Available';
-      influencer.approved = influencer.approved || 'No';
-      influencer.in_house = influencer.in_house || 'No';
       influencer.rating = influencer.rating || 0;
       influencer.notes = influencer.notes || '';
       influencer.last_contact = influencer.last_contact || '';
-      
-      // Add computed fields (removed for new version)
-      influencer.profileImage = ''; // Not used anymore
-      influencer.topContent = ['', '', '']; // Not used anymore
+      influencer.profile_picture_url = influencer.profile_picture_url || '';
       
       return influencer;
     });
