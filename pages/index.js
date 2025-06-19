@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Instagram, Youtube, Twitter, TrendingUp, Calendar, Download, Bookmark, ExternalLink, Users, MapPin, Tag, RefreshCw, Database, Star, DollarSign, Mail, Copy, CheckCircle, Globe, CheckCircle2, Home } from 'lucide-react';
+import { Search, Filter, Instagram, Youtube, Twitter, TrendingUp, Calendar, Download, Bookmark, ExternalLink, Users, MapPin, Tag, RefreshCw, Database, Star, DollarSign, Mail, Copy, CheckCircle } from 'lucide-react';
 
 export default function InfluencerDiscoveryApp() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -7,242 +7,33 @@ export default function InfluencerDiscoveryApp() {
   const [selectedPlatform, setSelectedPlatform] = useState("all");
   const [selectedFollowerRange, setSelectedFollowerRange] = useState("all");
   const [selectedLocation, setSelectedLocation] = useState("");
-  const [selectedNationality, setSelectedNationality] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedRateRange, setSelectedRateRange] = useState("all");
-  const [selectedApproved, setSelectedApproved] = useState("all");
-  const [selectedInHouse, setSelectedInHouse] = useState("all");
   const [sortBy, setSortBy] = useState("relevance");
   const [savedInfluencers, setSavedInfluencers] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [showApiInfo, setShowApiInfo] = useState(false);
-  const [dataSource, setDataSource] = useState('demo');
   const [allInfluencers, setAllInfluencers] = useState([]);
   const [copiedEmail, setCopiedEmail] = useState(null);
+  const [hasLoadedData, setHasLoadedData] = useState(false);
 
-  // Mock data for demo mode
-  const mockInfluencers = [
-    {
-      id: 1,
-      name: "Sarah Johnson",
-      handle: "@sarahfit",
-      email: "sarah@influencer.com",
-      platforms: ["instagram", "youtube"],
-      followers: 125000,
-      engagementRate: 4.8,
-      bio: "Certified fitness coach | Yoga instructor | Healthy lifestyle advocate | Plant-based nutrition",
-      location: "Los Angeles, CA",
-      nationality: "American",
-      categories: ["fitness", "wellness", "lifestyle"],
-      avgLikesPerPost: 6000,
-      postsPerWeek: 5,
-      website: "www.sarahfit.com",
-      instagram_username: "sarahfit",
-      rate_range: "$$$",
-      status: "Available",
-      approved: "Yes",
-      in_house: "No",
-      rating: 5,
-      notes: "Great engagement, prefers lifestyle brands",
-      last_contact: "2024-01-15"
-    },
-    {
-      id: 2,
-      name: "Mike Chen",
-      handle: "@techmikereviews",
-      email: "mike@techreviews.com",
-      platforms: ["youtube", "twitter"],
-      followers: 450000,
-      engagementRate: 6.2,
-      bio: "Tech reviewer | Gadget enthusiast | Software developer | Unboxing the latest tech trends",
-      location: "San Francisco, CA",
-      nationality: "Chinese-American",
-      categories: ["tech", "reviews"],
-      avgLikesPerPost: 28000,
-      postsPerWeek: 3,
-      website: "www.techmike.io",
-      instagram_username: "techmikereviews",
-      rate_range: "$$$$",
-      status: "Contacted",
-      approved: "Yes",
-      in_house: "Yes",
-      rating: 4,
-      notes: "Prefers long-term partnerships",
-      last_contact: "2024-02-01"
-    },
-    {
-      id: 3,
-      name: "Emma Watson",
-      handle: "@emmacooks",
-      email: "emma@vegancooking.com",
-      platforms: ["instagram", "tiktok"],
-      followers: 89000,
-      engagementRate: 8.5,
-      bio: "Vegan chef | Recipe developer | Sustainable living | Making plant-based cooking simple",
-      location: "Portland, OR",
-      nationality: "British",
-      categories: ["food", "vegan", "sustainability"],
-      avgLikesPerPost: 7500,
-      postsPerWeek: 7,
-      website: "www.emmacooks.com",
-      instagram_username: "emmacooks",
-      rate_range: "$$",
-      status: "Available",
-      approved: "Yes",
-      in_house: "No",
-      rating: 5,
-      notes: "Very responsive, great content quality",
-      last_contact: "2024-01-20"
-    },
-    {
-      id: 4,
-      name: "David Park",
-      handle: "@davidtravels",
-      email: "david@travelphoto.com",
-      platforms: ["instagram", "youtube"],
-      followers: 320000,
-      engagementRate: 5.9,
-      bio: "Travel photographer | Adventure seeker | Capturing hidden gems worldwide | Travel tips & guides",
-      location: "New York, NY",
-      nationality: "Korean",
-      categories: ["travel", "photography", "lifestyle"],
-      avgLikesPerPost: 19000,
-      postsPerWeek: 4,
-      website: "www.davidtravels.net",
-      instagram_username: "davidtravels",
-      rate_range: "$$$$",
-      status: "Negotiating",
-      approved: "No",
-      in_house: "No",
-      rating: 4,
-      notes: "Requires 2-month advance booking",
-      last_contact: "2024-02-10"
-    },
-    {
-      id: 5,
-      name: "Lisa Martinez",
-      handle: "@lisamakeup",
-      email: "lisa@beautystudio.com",
-      platforms: ["instagram", "tiktok", "youtube"],
-      followers: 67000,
-      engagementRate: 9.2,
-      bio: "Professional makeup artist | Beauty tutorials | Sustainable beauty advocate | Cruelty-free only",
-      location: "Miami, FL",
-      nationality: "Mexican",
-      categories: ["beauty", "makeup", "sustainability"],
-      avgLikesPerPost: 6200,
-      postsPerWeek: 6,
-      website: "www.lisamakeup.com",
-      instagram_username: "lisamakeup",
-      rate_range: "$$",
-      status: "Available",
-      approved: "Yes",
-      in_house: "No",
-      rating: 5,
-      notes: "Excellent for beauty campaigns",
-      last_contact: "2024-01-25"
-    },
-    {
-      id: 6,
-      name: "James Wilson",
-      handle: "@jamesfashion",
-      email: "james@mensstyle.com",
-      platforms: ["instagram", "tiktok"],
-      followers: 156000,
-      engagementRate: 7.1,
-      bio: "Men's fashion blogger | Sustainable fashion advocate | Style tips for the modern man",
-      location: "Chicago, IL",
-      nationality: "Canadian",
-      categories: ["fashion", "lifestyle", "sustainability"],
-      avgLikesPerPost: 11000,
-      postsPerWeek: 5,
-      website: "www.jamesstyle.com",
-      instagram_username: "jamesfashion",
-      rate_range: "$$$",
-      status: "Confirmed",
-      approved: "Yes",
-      in_house: "Yes",
-      rating: 4,
-      notes: "Working on current campaign",
-      last_contact: "2024-02-05"
-    },
-    {
-      id: 7,
-      name: "Robert Thompson",
-      handle: "@robertrealestate",
-      email: "robert@realestatepro.com",
-      platforms: ["instagram", "youtube"],
-      followers: 234000,
-      engagementRate: 5.3,
-      bio: "Real estate investor | Property coach | Helping you build wealth through real estate | Investment strategies",
-      location: "Dallas, TX",
-      nationality: "American",
-      categories: ["real estate", "finance", "investment"],
-      avgLikesPerPost: 12400,
-      postsPerWeek: 4,
-      website: "www.robertrealtor.com",
-      instagram_username: "robertrealestate",
-      rate_range: "$$$$",
-      status: "Unavailable",
-      approved: "No",
-      in_house: "No",
-      rating: 3,
-      notes: "Booked until March",
-      last_contact: "2024-01-30"
-    },
-    {
-      id: 8,
-      name: "Amanda Chen",
-      handle: "@amandahomes",
-      email: "amanda@homestyle.com",
-      platforms: ["instagram", "tiktok"],
-      followers: 87000,
-      engagementRate: 7.8,
-      bio: "Real estate agent | Home staging expert | First-time buyer specialist | Making your dream home a reality",
-      location: "Seattle, WA",
-      nationality: "Taiwanese",
-      categories: ["real estate", "home decor", "lifestyle"],
-      avgLikesPerPost: 6800,
-      postsPerWeek: 6,
-      website: "www.amandahomes.com",
-      instagram_username: "amandahomes",
-      rate_range: "$$",
-      status: "Available",
-      approved: "Yes",
-      in_house: "No",
-      rating: 5,
-      notes: "Specializes in home decor content",
-      last_contact: "2024-02-08"
-    }
-  ];
-
-  // Initialize with mock data
-  useEffect(() => {
-    setAllInfluencers(mockInfluencers);
-    setFilteredInfluencers(mockInfluencers);
-  }, []);
-
-  const categories = ["all", "fitness", "wellness", "lifestyle", "tech", "reviews", "food", "vegan", "sustainability", "travel", "photography", "beauty", "makeup", "fashion", "real estate", "finance", "investment", "home decor"];
+  // Limited categories
+  const categories = ["all", "real estate", "lifestyle", "investment"];
 
   const searchSuggestions = [
-    "fitness coach",
-    "vegan recipes", 
-    "tech reviewer",
-    "travel photographer",
-    "makeup artist",
-    "sustainable fashion",
-    "yoga instructor",
-    "food blogger",
-    "real estate",
-    "property investment"
+    "real estate agent",
+    "property investor", 
+    "lifestyle blogger",
+    "investment advisor",
+    "real estate coach",
+    "luxury lifestyle",
+    "property developer",
+    "investment guru"
   ];
 
   const statusOptions = ["all", "Available", "Contacted", "Negotiating", "Confirmed", "Unavailable"];
   const rateRangeOptions = ["all", "$", "$$", "$$$", "$$$$"];
-  const approvalOptions = ["all", "Yes", "No"];
-  const inHouseOptions = ["all", "Yes", "No"];
 
   const platformIcons = {
     instagram: <Instagram className="icon-small" />,
@@ -304,6 +95,15 @@ export default function InfluencerDiscoveryApp() {
     ));
   };
 
+  const getInitials = (name) => {
+    if (!name) return '?';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return parts[0][0] + ' ' + parts[parts.length - 1][0];
+    }
+    return parts[0][0];
+  };
+
   // Fetch from Google Sheets
   const fetchFromSheets = async () => {
     setIsLoading(true);
@@ -313,10 +113,10 @@ export default function InfluencerDiscoveryApp() {
       
       if (data.influencers && data.influencers.length > 0) {
         setAllInfluencers(data.influencers);
-        setDataSource('sheets');
+        setHasLoadedData(true);
         filterInfluencers(data.influencers);
       } else {
-        alert('No data found in Google Sheets. Make sure your sheet is set up correctly.');
+        alert('No data found in Google Sheets. Make sure your sheet is set up correctly with influencer data.');
       }
     } catch (error) {
       console.error('Error loading sheet data:', error);
@@ -325,6 +125,11 @@ export default function InfluencerDiscoveryApp() {
       setIsLoading(false);
     }
   };
+
+  // Auto-load data on first visit
+  useEffect(() => {
+    fetchFromSheets();
+  }, []);
 
   // Filter influencers based on all criteria
   const filterInfluencers = (influencersToFilter) => {
@@ -365,13 +170,6 @@ export default function InfluencerDiscoveryApp() {
       );
     }
 
-    // Nationality filter
-    if (selectedNationality) {
-      filtered = filtered.filter(influencer =>
-        influencer.nationality && influencer.nationality.toLowerCase().includes(selectedNationality.toLowerCase())
-      );
-    }
-
     // Category filter
     if (selectedCategory !== "all") {
       filtered = filtered.filter(influencer =>
@@ -393,20 +191,6 @@ export default function InfluencerDiscoveryApp() {
       );
     }
 
-    // Approved filter
-    if (selectedApproved !== "all") {
-      filtered = filtered.filter(influencer =>
-        influencer.approved === selectedApproved
-      );
-    }
-
-    // In-House filter
-    if (selectedInHouse !== "all") {
-      filtered = filtered.filter(influencer =>
-        influencer.in_house === selectedInHouse
-      );
-    }
-
     // Sorting
     if (sortBy === "followers") {
       filtered.sort((a, b) => (b.followers || 0) - (a.followers || 0));
@@ -422,30 +206,11 @@ export default function InfluencerDiscoveryApp() {
   // Apply filters whenever criteria change
   useEffect(() => {
     filterInfluencers();
-  }, [searchTerm, selectedPlatform, selectedFollowerRange, selectedLocation, selectedNationality, selectedCategory, selectedStatus, selectedRateRange, selectedApproved, selectedInHouse, sortBy, allInfluencers]);
-
-  // Reset API info when filters change
-  useEffect(() => {
-    setShowApiInfo(false);
-  }, [selectedPlatform, selectedFollowerRange, selectedLocation, selectedNationality, selectedCategory, selectedStatus, selectedRateRange, selectedApproved, selectedInHouse, sortBy]);
+  }, [searchTerm, selectedPlatform, selectedFollowerRange, selectedLocation, selectedCategory, selectedStatus, selectedRateRange, sortBy, allInfluencers]);
 
   const handleSearch = () => {
     if (!searchTerm) return;
-    
-    setIsLoading(true);
-    
-    const hasResults = allInfluencers.some(influencer =>
-      influencer.bio.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      influencer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (influencer.categories && influencer.categories.some(cat => cat.toLowerCase().includes(searchTerm.toLowerCase())))
-    );
-    
-    setTimeout(() => {
-      setIsLoading(false);
-      if (!hasResults) {
-        setShowApiInfo(true);
-      }
-    }, 1500);
+    filterInfluencers();
   };
 
   const toggleSaveInfluencer = (id) => {
@@ -458,7 +223,7 @@ export default function InfluencerDiscoveryApp() {
 
   const exportToCSV = () => {
     const dataToExport = filteredInfluencers;
-    const headers = ["Name", "Handle", "Email", "Platforms", "Followers", "Engagement Rate", "Location", "Nationality", "Categories", "Website", "Rate Range", "Status", "Approved", "In-House", "Rating", "Notes", "Last Contact"];
+    const headers = ["Name", "Handle", "Email", "Platforms", "Followers", "Engagement Rate", "Location", "Categories", "Website", "Rate Range", "Status", "Rating", "Notes", "Last Contact"];
     const rows = dataToExport.map(inf => [
       inf.name || '',
       inf.handle || '',
@@ -467,13 +232,10 @@ export default function InfluencerDiscoveryApp() {
       inf.followers || 0,
       (inf.engagementRate || 0) + "%",
       inf.location || '',
-      inf.nationality || '',
       inf.categories ? inf.categories.join(", ") : '',
       inf.website || '',
       inf.rate_range || '',
       inf.status || '',
-      inf.approved || '',
-      inf.in_house || '',
       inf.rating || '',
       inf.notes || '',
       inf.last_contact || ''
@@ -513,34 +275,15 @@ export default function InfluencerDiscoveryApp() {
           color: #666;
           margin-bottom: 0.25rem;
         }
-        .demo-note {
-          font-size: 0.875rem;
-          color: #888;
-          margin-top: 0.25rem;
-        }
-        .data-source-toggle {
-          margin-bottom: 1.5rem;
-          padding: 1rem;
-          background: #f0f9ff;
-          border-radius: 0.5rem;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          flex-wrap: wrap;
-          gap: 1rem;
-        }
-        .data-source-info {
+        .data-info {
           display: flex;
           align-items: center;
           gap: 0.5rem;
+          color: #10b981;
+          font-size: 0.875rem;
+          margin-top: 0.5rem;
         }
-        .data-source-label {
-          font-weight: bold;
-        }
-        .data-source-status {
-          color: #666;
-        }
-        .data-source-button {
+        .refresh-button {
           padding: 0.5rem 1rem;
           background: #3b82f6;
           color: white;
@@ -551,16 +294,14 @@ export default function InfluencerDiscoveryApp() {
           align-items: center;
           gap: 0.5rem;
           transition: all 0.2s;
+          margin-bottom: 1.5rem;
         }
-        .data-source-button:hover:not(:disabled) {
+        .refresh-button:hover:not(:disabled) {
           background: #2563eb;
         }
-        .data-source-button:disabled {
+        .refresh-button:disabled {
           opacity: 0.5;
           cursor: not-allowed;
-        }
-        .data-source-button-active {
-          background: #10b981;
         }
         .search-container {
           position: relative;
@@ -655,7 +396,7 @@ export default function InfluencerDiscoveryApp() {
         }
         .filters-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
           gap: 1rem;
         }
         .filter-select {
@@ -669,39 +410,6 @@ export default function InfluencerDiscoveryApp() {
           border: 1px solid #ddd;
           border-radius: 0.375rem;
           font-size: 0.875rem;
-        }
-        .api-info {
-          background-color: #dbeafe;
-          border: 1px solid #60a5fa;
-          border-radius: 0.5rem;
-          padding: 1rem;
-          margin-bottom: 1.5rem;
-        }
-        .api-info h3 {
-          font-weight: 600;
-          color: #1e40af;
-          margin-bottom: 0.5rem;
-        }
-        .api-info p {
-          color: #1e40af;
-          font-size: 0.875rem;
-          margin-bottom: 0.75rem;
-        }
-        .api-info-note {
-          color: #3b82f6;
-          font-size: 0.75rem;
-          margin-bottom: 0.75rem;
-        }
-        .clear-button {
-          color: #2563eb;
-          font-size: 0.875rem;
-          text-decoration: underline;
-          background: none;
-          border: none;
-          cursor: pointer;
-        }
-        .clear-button:hover {
-          color: #1e40af;
         }
         .results-header {
           display: flex;
@@ -787,42 +495,11 @@ export default function InfluencerDiscoveryApp() {
           font-weight: 500;
           color: white;
         }
-        .card-badges {
-          position: absolute;
-          top: 1rem;
-          right: 1rem;
-          display: flex;
-          gap: 0.5rem;
-          align-items: center;
-        }
-        .approval-badge {
-          display: flex;
-          align-items: center;
-          gap: 0.25rem;
-          padding: 0.125rem 0.5rem;
-          border-radius: 9999px;
-          font-size: 0.75rem;
-          font-weight: 500;
-          background: #dcfce7;
-          color: #166534;
-        }
-        .inhouse-badge {
-          display: flex;
-          align-items: center;
-          gap: 0.25rem;
-          padding: 0.125rem 0.5rem;
-          border-radius: 9999px;
-          font-size: 0.75rem;
-          font-weight: 500;
-          background: #e0e7ff;
-          color: #3730a3;
-        }
         .card-header {
           display: flex;
           align-items: start;
           justify-content: space-between;
           margin-bottom: 1rem;
-          padding-top: 2rem;
         }
         .profile-section {
           display: flex;
@@ -840,24 +517,11 @@ export default function InfluencerDiscoveryApp() {
           font-weight: bold;
           font-size: 1.25rem;
           overflow: hidden;
-          background: #e5e7eb;
         }
         .profile-image img {
           width: 100%;
           height: 100%;
           object-fit: cover;
-        }
-        .profile-gradient-1 {
-          background: linear-gradient(to bottom right, #10b981, #3b82f6);
-        }
-        .profile-gradient-2 {
-          background: linear-gradient(to bottom right, #8b5cf6, #ec4899);
-        }
-        .profile-gradient-3 {
-          background: linear-gradient(to bottom right, #f59e0b, #ef4444);
-        }
-        .profile-gradient-0 {
-          background: linear-gradient(to bottom right, #3b82f6, #8b5cf6);
         }
         .profile-info h3 {
           font-size: 1.125rem;
@@ -974,25 +638,13 @@ export default function InfluencerDiscoveryApp() {
           margin-bottom: 1rem;
           line-height: 1.5;
         }
-        .location-info {
-          display: flex;
-          gap: 1rem;
-          margin-bottom: 0.75rem;
-          flex-wrap: wrap;
-        }
         .location {
           display: flex;
           align-items: center;
           gap: 0.25rem;
           font-size: 0.875rem;
           color: #888;
-        }
-        .nationality {
-          display: flex;
-          align-items: center;
-          gap: 0.25rem;
-          font-size: 0.875rem;
-          color: #888;
+          margin-bottom: 0.75rem;
         }
         .categories {
           display: flex;
@@ -1009,6 +661,7 @@ export default function InfluencerDiscoveryApp() {
           color: #4b5563;
           font-size: 0.75rem;
           border-radius: 9999px;
+          text-transform: capitalize;
         }
         .analytics {
           border-top: 1px solid #e5e7eb;
@@ -1095,47 +748,34 @@ export default function InfluencerDiscoveryApp() {
 
       <div className="container">
         <div className="header">
-          <h1 className="title">🔍 DLD Influencers Tool</h1>
-          <p className="subtitle">Find the perfect influencers for any DLD Campaign</p>
-          <p className="demo-note">
-            {dataSource === 'sheets' 
-              ? 'Using data from Google Sheets' 
-              : 'Using Google Sheets for real data!'}
-          </p>
+          <h1 className="title">🔍 Influencer Discovery Tool</h1>
+          <p className="subtitle">Find the perfect influencers for your brand</p>
+          {hasLoadedData && (
+            <div className="data-info">
+              <Database size={16} />
+              <span>Connected to Google Sheets</span>
+            </div>
+          )}
         </div>
 
-        {/* Data Source Toggle */}
-        <div className="data-source-toggle">
-          <div className="data-source-info">
-            <Database size={20} />
-            <span className="data-source-label">Data Source:</span>
-            <span className="data-source-status">
-              {dataSource === 'sheets' ? 'Google Sheets (Live Data)' : 'Demo Data'}
-            </span>
-          </div>
-          <button
-            onClick={fetchFromSheets}
-            disabled={isLoading}
-            className={`data-source-button ${dataSource === 'sheets' ? 'data-source-button-active' : ''}`}
-          >
-            {isLoading ? (
-              <>
-                <RefreshCw size={16} className="spinner" />
-                Loading...
-              </>
-            ) : dataSource === 'sheets' ? (
-              <>
-                <RefreshCw size={16} />
-                Refresh Data
-              </>
-            ) : (
-              <>
-                <Database size={16} />
-                Load from Google Sheets
-              </>
-            )}
-          </button>
-        </div>
+        {/* Refresh Data Button */}
+        <button
+          onClick={fetchFromSheets}
+          disabled={isLoading}
+          className="refresh-button"
+        >
+          {isLoading ? (
+            <>
+              <RefreshCw size={16} className="spinner" />
+              Loading...
+            </>
+          ) : (
+            <>
+              <RefreshCw size={16} />
+              Refresh Data
+            </>
+          )}
+        </button>
 
         {/* Search Bar */}
         <div className="search-container">
@@ -1144,13 +784,10 @@ export default function InfluencerDiscoveryApp() {
               <Search className="search-icon" />
               <input
                 type="text"
-                placeholder="Search by keywords (e.g., real estate, fitness coach, vegan recipes)"
+                placeholder="Search by keywords (e.g., real estate, lifestyle, investment)"
                 className="search-input"
                 value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setShowApiInfo(false);
-                }}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 onFocus={() => setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                 onKeyDown={(e) => {
@@ -1220,18 +857,10 @@ export default function InfluencerDiscoveryApp() {
 
             <input
               type="text"
-              placeholder="Location..."
+              placeholder="Filter by location..."
               className="filter-input"
               value={selectedLocation}
               onChange={(e) => setSelectedLocation(e.target.value)}
-            />
-
-            <input
-              type="text"
-              placeholder="Nationality..."
-              className="filter-input"
-              value={selectedNationality}
-              onChange={(e) => setSelectedNationality(e.target.value)}
             />
 
             <select
@@ -1241,7 +870,7 @@ export default function InfluencerDiscoveryApp() {
             >
               <option value="all">All Categories</option>
               {categories.slice(1).map(cat => (
-                <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
+                <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1).replace(' ', ' ')}</option>
               ))}
             </select>
 
@@ -1271,30 +900,6 @@ export default function InfluencerDiscoveryApp() {
 
             <select
               className="filter-select"
-              value={selectedApproved}
-              onChange={(e) => setSelectedApproved(e.target.value)}
-            >
-              {approvalOptions.map(option => (
-                <option key={option} value={option}>
-                  {option === 'all' ? 'All Approved' : `Approved: ${option}`}
-                </option>
-              ))}
-            </select>
-
-            <select
-              className="filter-select"
-              value={selectedInHouse}
-              onChange={(e) => setSelectedInHouse(e.target.value)}
-            >
-              {inHouseOptions.map(option => (
-                <option key={option} value={option}>
-                  {option === 'all' ? 'All Types' : `In-House: ${option}`}
-                </option>
-              ))}
-            </select>
-
-            <select
-              className="filter-select"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
             >
@@ -1305,30 +910,6 @@ export default function InfluencerDiscoveryApp() {
             </select>
           </div>
         </div>
-
-        {/* API Info */}
-        {showApiInfo && searchTerm && filteredInfluencers.length === 0 && !isLoading && (
-          <div className="api-info">
-            <h3>🔍 No Results Found</h3>
-            <p>
-              No influencers found for "{searchTerm}" in the current data source.
-            </p>
-            <p className="api-info-note">
-              {dataSource === 'sheets' 
-                ? 'Try adding more influencers to your Google Sheet or search for different keywords.'
-                : 'Connect your Google Sheets to add your own influencer data!'}
-            </p>
-            <button
-              onClick={() => {
-                setSearchTerm("");
-                setShowApiInfo(false);
-              }}
-              className="clear-button"
-            >
-              Clear search and view all influencers
-            </button>
-          </div>
-        )}
 
         {/* Results Header */}
         <div className="results-header">
@@ -1353,9 +934,7 @@ export default function InfluencerDiscoveryApp() {
           <div className="loading-container">
             <div className="loading-content">
               <div className="spinner"></div>
-              <p className="loading-text">
-                {dataSource === 'sheets' ? 'Loading from Google Sheets...' : 'Searching for influencers...'}
-              </p>
+              <p className="loading-text">Loading from Google Sheets...</p>
             </div>
           </div>
         )}
@@ -1365,57 +944,50 @@ export default function InfluencerDiscoveryApp() {
           <div className="influencers-grid">
             {filteredInfluencers.map((influencer) => (
               <div key={influencer.id} className="influencer-card">
-                {/* Status and Badges */}
-                <div className="card-badges">
-                  {influencer.approved === "Yes" && (
-                    <div className="approval-badge">
-                      <CheckCircle2 size={12} />
-                      <span>Approved</span>
-                    </div>
-                  )}
-                  {influencer.in_house === "Yes" && (
-                    <div className="inhouse-badge">
-                      <Home size={12} />
-                      <span>In-House</span>
-                    </div>
-                  )}
-                  {influencer.status && (
-                    <div 
-                      className="status-badge"
-                      style={{ backgroundColor: getStatusColor(influencer.status) }}
-                    >
-                      {influencer.status}
-                    </div>
-                  )}
-                </div>
+                {/* Status Badge */}
+                {influencer.status && (
+                  <div 
+                    className="status-badge"
+                    style={{ backgroundColor: getStatusColor(influencer.status) }}
+                  >
+                    {influencer.status}
+                  </div>
+                )}
 
                 {/* Card Header */}
                 <div className="card-header">
                   <div className="profile-section">
-                    <div className="profile-image">
-                      <img 
-                        src={(() => {
-                          if (influencer.profile_picture_url) {
-                            return influencer.profile_picture_url;
-                          }
-                          if (influencer.email) {
-                            return `https://i.pravatar.cc/150?u=${encodeURIComponent(influencer.email)}`;
-                          }
-                          const colors = ['7F9CF5', 'A78BFA', 'F472B6', 'FB923C', '34D399', '60A5FA'];
-                          const colorIndex = (influencer.name?.charCodeAt(0) || 0) % colors.length;
-                          const bgColor = colors[colorIndex];
-                          return `https://ui-avatars.com/api/?name=${encodeURIComponent(influencer.name || 'User')}&background=${bgColor}&color=fff&size=128&bold=true`;
-                        })()}
-                        alt={influencer.name}
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          const gradient = `profile-gradient-${(influencer.id || 1) % 4}`;
-                          e.target.parentElement.className = `profile-image ${gradient}`;
-                          const initials = influencer.name ? influencer.name.split(' ').map(n => n[0]).join('') : '?';
-                          e.target.parentElement.innerHTML = `<span style="color: white; font-weight: bold; font-size: 1.25rem;">${initials}</span>`;
-                        }}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
+                    <div className="profile-image" style={{
+                      background: (() => {
+                        const colors = [
+                          'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                          'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                          'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                          'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+                          'linear-gradient(135deg, #30cfd0 0%, #330867 100%)',
+                          'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+                          'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)'
+                        ];
+                        const colorIndex = (influencer.name?.charCodeAt(0) || 0) % colors.length;
+                        return colors[colorIndex];
+                      })()
+                    }}>
+                      {influencer.profile_picture_url ? (
+                        <img 
+                          src={influencer.profile_picture_url}
+                          alt={influencer.name}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.parentElement.innerHTML = `<span style="color: white; font-weight: bold; font-size: 1.25rem;">${getInitials(influencer.name)}</span>`;
+                          }}
+                        />
+                      ) : (
+                        <span style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          {getInitials(influencer.name)}
+                        </span>
+                      )}
                     </div>
                     <div className="profile-info">
                       <h3>{influencer.name || 'Unknown'}</h3>
@@ -1522,21 +1094,13 @@ export default function InfluencerDiscoveryApp() {
                   )}
                 </p>
 
-                {/* Location and Nationality */}
-                <div className="location-info">
-                  {influencer.location && (
-                    <div className="location">
-                      <MapPin size={16} />
-                      <span>{influencer.location}</span>
-                    </div>
-                  )}
-                  {influencer.nationality && (
-                    <div className="nationality">
-                      <Globe size={16} />
-                      <span>{influencer.nationality}</span>
-                    </div>
-                  )}
-                </div>
+                {/* Location */}
+                {influencer.location && (
+                  <div className="location">
+                    <MapPin size={16} />
+                    <span>{influencer.location}</span>
+                  </div>
+                )}
 
                 {/* Categories */}
                 {influencer.categories && influencer.categories.length > 0 && (
@@ -1599,12 +1163,16 @@ export default function InfluencerDiscoveryApp() {
         )}
 
         {/* No Results */}
-        {!isLoading && filteredInfluencers.length === 0 && !showApiInfo && (
+        {!isLoading && filteredInfluencers.length === 0 && (
           <div className="no-results">
             <p>No influencers found matching your criteria.</p>
-            {searchTerm && (
+            {!hasLoadedData ? (
               <p className="no-results-hint">
-                Try searching for "fitness", "tech", "vegan", "travel", or "real estate" to see demo results.
+                Click "Refresh Data" to load influencers from your Google Sheet.
+              </p>
+            ) : (
+              <p className="no-results-hint">
+                Try adjusting your filters or add more influencers to your Google Sheet.
               </p>
             )}
           </div>
