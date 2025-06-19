@@ -89,6 +89,13 @@ export default async function handler(req, res) {
           case 'profile_picture_url':
             influencer.profile_picture_url = value.trim();
             break;
+          case 'nationality':
+            influencer.nationality = value.trim();
+            break;
+          case 'approved':
+            // Ensure approved is properly formatted (Yes/No)
+            influencer.approved = value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : '';
+            break;
           default:
             influencer[cleanHeader] = value;
         }
@@ -115,6 +122,8 @@ export default async function handler(req, res) {
       influencer.notes = influencer.notes || '';
       influencer.last_contact = influencer.last_contact || '';
       influencer.profile_picture_url = influencer.profile_picture_url || '';
+      influencer.nationality = influencer.nationality || '';
+      influencer.approved = influencer.approved || '';
       
       return influencer;
     });
