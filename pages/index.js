@@ -767,8 +767,8 @@ export default function InfluencerDiscoveryApp() {
 
       <div className="container">
         <div className="header">
-          <h1 className="title">🔍 Influencer Discovery Tool</h1>
-          <p className="subtitle">Find the perfect influencers for your brand</p>
+          <h1 className="title">DLD Influencer Discovery Tool</h1>
+          <p className="subtitle">Find the right influencers for any DLD campaign</p>
           {hasLoadedData && (
             <div className="data-info">
               <Database size={16} />
