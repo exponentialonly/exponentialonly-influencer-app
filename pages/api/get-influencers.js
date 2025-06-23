@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
   // Replace with your actual Sheet ID from the Google Sheets URL
-  const SHEET_ID = '1ebZswB2W8yT7VhfIhB5wyS2NvreKkC2lq5lmlX1Kp-E';
+  const SHEET_ID = '1Xtl_DofYpaAlAaHlGD7lw4lCs53Mr7yU-rUUN2yo-lA';
   const SHEET_NAME = 'Sheet1'; // Default sheet name
   
   // Valid categories
